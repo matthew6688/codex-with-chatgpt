@@ -31,6 +31,18 @@ Recompute indices after each edit. If even the tiny indexed write fails,
 recover in a new Chat of the same Project with the exact Drive file ID and
 last verified SHA; do not make a second work file or ask Codex to upload it.
 
+For an Episode collaboration, once channel + canonical Episode ID are known,
+create or reuse one stable `Google Drive / ChatGPT / <EPISODE>/` folder before
+dispatching the first GPT writing task. Do not require the user to provide a
+Drive URL: accept their local/attached Markdown or an existing Drive source,
+snapshot exact bytes and SHA in the Episode intake, then place that exact
+snapshot in the shared Drive folder before GPT begins. Include the same folder
+URL/ID in every independent GPT conversation for that Episode, and keep all
+checkpoints and accepted artifacts there. A temporary Drive outage may delay
+GPT dispatch, but does not block local intake preparation or change the user's
+source route. Script Lock and downstream stages bind exact artifact hashes;
+later skill updates never rewrite locked Script/checkpoint bytes.
+
 **Golden rules**
 
 1. NEVER paste file contents, diffs, or logs into ChatGPT. ChatGPT reads them through MCP.
