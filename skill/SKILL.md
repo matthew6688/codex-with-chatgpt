@@ -76,14 +76,13 @@ later skill updates never rewrite locked Script/checkpoint bytes.
    Follow **In-app browser (ChatGPT)** below. NEVER Computer Use (no
    screenshot-click). NEVER launch or control a third-party/external browser
    (Chrome, Safari, Edge…), and never use `open <url>` to hand off to one.
-   - The ONLY exception: the user explicitly says the Cloudflare login must use
-     their own browser session — that single Cloudflare login step may go through
-     their browser; everything else stays in the built-in browser.
-   - If the user asks to run ChatGPT in their own browser, refuse politely and
-     explain: "Codex 需要持续调用 ChatGPT 和配置连接，这会频繁操作页面，可能影响
-     你浏览器的正常使用。ChatGPT 只能跑在内置浏览器里。" Only if the user replies
-     with an explicit "我愿意承担影响" may you proceed in their browser; otherwise
-     keep ChatGPT in the built-in browser, every time they ask.
+   - Work-browser recovery is the last fallback and requires the user's explicit
+     authorization. First reopen the saved conversation URL in a fresh built-in
+     tab. If it remains unusable, open the saved Project in another built-in tab,
+     create one replacement Chat there, and resume from the durable checkpoint.
+     Only when those built-in recovery paths also fail may you open the same saved
+     conversation or Project URL in the user's work browser. Preserve the exact
+     Project, Chat mode, chat URLs and checkpoint; never use an unrelated chat.
 6. Conversation mode depends on `c2c session --json` → `conversation.mode`
    (see Conversation management). Do not invent another mode. Multiple
    independent ChatGPT conversations are allowed; they are separate work
@@ -153,11 +152,13 @@ that close the tab, hide the window, or stall on the settings page.
    built-in-browser tab and inspect the actual conversation there. A fresh tab
    is a page recovery, not a new chat: do not resend the last message if it is
    already visible or still generating. Continue on the recovered tab and
-   keep its URL. If the fresh tab also cannot load, use the saved Project to
-   create one replacement Chat conversation and resume from the durable
-   checkpoint/Drive files; preserve both old and new URLs. Only an actual
-   interactive login, 2FA, or CAPTCHA form requires user action. Never switch
-   to Work mode or the user's external browser for this recovery. Once a tab is
+   keep its URL. If the fresh tab also cannot load, open the saved Project in a
+   fresh built-in tab, create one replacement Chat conversation there, and resume
+   from the durable checkpoint/Drive files; preserve both old and new URLs. If
+   that built-in Project/replacement-chat path also cannot load after a focused
+   retry, use Golden rule 5's user-authorized work-browser fallback. Only an
+   actual interactive login, 2FA, or CAPTCHA form requires user action. Never
+   switch to Work mode. Once a tab is
    confirmed non-generating and unusable, close that bad tab after saving its
    URL and Drive/checkpoint state. Do not accumulate stale recovery tabs or
    close a tab that may still be generating. Keep only the healthy active Chat
@@ -221,8 +222,10 @@ that close the tab, hide the window, or stall on the settings page.
 
    A collection or chat page that shows only `Retry` / `重试` is a navigation
    error, not generation and not a pairing failure. Try Retry once. If it
-   remains broken, follow §2: reopen the exact saved chat URL in one fresh
-   built-in-browser tab and inspect it before considering a replacement chat.
+   remains broken, follow §2 in order: reopen the exact saved chat URL in one
+   fresh built-in-browser tab; if that fails, create one replacement Chat from
+   the saved Project in the built-in browser; only if that also fails may the
+   user-authorized work-browser fallback be used.
    If the chat loads but its Project collection does not, click the on-page
    `Open … project` / `打开“… ”项目` link; require the project chat list and
    new-chat composer before continuing. Keep the old saved URL/checkpoint
@@ -885,8 +888,8 @@ the previous public address is gone. Doctor already started a new one.
 | --- | --- |
 | Bridge not running | `c2c start` (doctor does this automatically) |
 | Tunnel dead / URL unreachable / 全关掉后连接失效 | `c2c doctor` → if `namedRepair.needed`, login to Cloudflare and doctor again (do not Delete). If `chatgptRepair.needed`, tell the user the message, then **Delete** THIS workspace's connector only (`connectorName`) and create it again. Never Reconnect. After recreate, re-check `workspace_info` in the saved chat; if it still fails, new chat in the same Project (or long-chat switch) + HANDOFF. |
-| Collection page shows only Retry | Retry once, then use §2 to reopen the saved chat URL in one new built-in-browser tab; from a loaded chat, use its Project link if needed. Do not write INIT/EXECUTED waiting checkpoints until the message is visible. |
-| Saved chat shows `cloudflare_challenge`, `Unknown error`, or persistent Retry-only page | Save its exact URL and Drive/checkpoint location; Retry once, then open the same URL in one new built-in-browser tab. Inspect before resending. Only if that fails, create a new Chat conversation in the same Project and resume from durable files. Ask the user only for a real interactive login/2FA/CAPTCHA form. |
+| Collection page shows only Retry | Retry once, then follow §2: saved chat in a fresh built-in tab → replacement Project Chat in the built-in browser → user-authorized work browser only if both fail. Do not write INIT/EXECUTED waiting checkpoints until the message is visible. |
+| Saved chat shows `cloudflare_challenge`, `Unknown error`, or persistent Retry-only page | Save its exact URL and Drive/checkpoint location; Retry once, then follow §2's same three-level recovery order. Inspect before resending, and ask the user only for a real interactive login/2FA/CAPTCHA form. |
 | ChatGPT says tool call failed / 401 | token expired or revoked → re-pair (new pairing code + authorize) |
 | Pairing code rejected/expired | `c2c pair --json` for a fresh code |
 | Same explicit ChatGPT setup/reconnect browser configuration step fails twice after repair | Stop automating ChatGPT settings and use **Guided manual ChatGPT setup fallback**. Do not count browser/js timeout, loading/generating, or login/2FA waiting as failures. |
