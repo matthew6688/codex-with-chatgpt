@@ -56,6 +56,15 @@ For an Episode-scoped task, every message in either direction must include
 completion. `TASK_ID`/`PILOT_ID` are separate identifiers and never replace
 the Episode shortcode. Generic coding tasks do not invent an Episode ID.
 
+For a Drive-backed Episode task, every INIT/HANDOFF also includes one
+`DRIVE_CHECKPOINT` header. Its value is the exact Drive file ID (or folder ID
+when the first action is creating the file) and the requested successor state.
+PLAN states the exact write/readback actions. DONE must return the same header
+plus `READBACK_SHA256` after the actual Drive write and raw readback. A chat
+draft, plan, attachment, connector projection, or read-only Drive listing is
+not a checkpoint. Codex rejects DONE without a matching ID/SHA as incomplete
+and asks for one PLAN containing only the missing Drive write and readback.
+
 ### INIT (Codex → ChatGPT)
 
 ```
@@ -63,6 +72,7 @@ the Episode shortcode. Generic coding tasks do not invent an Episode ID.
 STATE: INIT
 TASK_ID: c2c_f81a
 ITERATION: 0
+DRIVE_CHECKPOINT: file:<drive-file-id> -> <requested-successor-state>
 
 GOAL:
 Implement dark mode.
@@ -70,6 +80,8 @@ Implement dark mode.
 INSTRUCTION:
 Inspect the connected workspace through Codex with ChatGPT MCP.
 Create an implementation plan for Codex.
+For a Drive-backed Episode task, the plan must treat the Drive write and raw
+readback as required completion actions, not optional follow-up.
 ```
 
 ### PLAN (ChatGPT → Codex)
@@ -79,6 +91,7 @@ Create an implementation plan for Codex.
 STATE: PLAN
 TASK_ID: c2c_f81a
 ITERATION: 1
+DRIVE_CHECKPOINT: file:<drive-file-id> -> <requested-successor-state>
 
 GOAL:
 ...
@@ -99,6 +112,10 @@ TESTS:
 
 SUCCESS_CRITERIA:
 ...
+
+DRIVE_COMPLETION_GATE:
+- Write that exact Drive file, then raw-read the same file ID.
+- DONE is allowed only after the saved successor bytes are verified.
 ```
 
 Plans must be finite, concrete, executable. Not 40-step epics.
@@ -152,10 +169,16 @@ first; a dirty current checkout is not evidence for the candidate commit.
 STATE: DONE
 TASK_ID: c2c_f81a
 ITERATION: 3
+DRIVE_CHECKPOINT: file:<drive-file-id> -> <requested-successor-state>
+READBACK_SHA256: <sha256-of-same-file-after-write>
 
 SUMMARY:
 ...
 ```
+
+If no Drive checkpoint applies, omit both fields. When they are present,
+Codex independently reads the same Drive file and verifies the successor
+state and SHA. A missing or mismatched SHA means the task is not done.
 
 ```
 [C2C]

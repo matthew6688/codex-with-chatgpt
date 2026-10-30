@@ -583,6 +583,14 @@ Drive is read-only from workspace_info or from the C2C tool list. If
 workspace_info names a different workspace, stop. Do not plan. Do not use this
 Project's memory.
 
+For every Drive-backed Episode task, include this exact checkpoint in INIT,
+HANDOFF, PLAN and DONE:
+`DRIVE_CHECKPOINT: file:<file_id> -> <successor_state>`.
+PLAN must state the exact Drive write and same-file readback. DONE must also
+include `READBACK_SHA256: <sha256>` from the same file after the write. No
+matching ID and readback SHA means not done. Do not end with a chat-only draft,
+an outline, a link, a plan, or an upload claim.
+
 Read code, git, diffs, and any released command output through that
 connector. Never ask anyone to paste file bodies, diffs, or logs. After
 EXECUTED, call execution_output (list, then read) when a readable item
@@ -631,6 +639,9 @@ For every Episode-scoped `[C2C]` message in either direction, include
 neither identifies the Episode for the reader. Apply this to progress,
 handoff, review, error, and completion messages; never infer an Episode ID
 for a generic coding task.
+For a Drive-backed Episode, add one `DRIVE_CHECKPOINT` header with the exact
+Drive file ID and requested successor state. PLAN must name the exact write and
+same-file readback. DONE must also carry the post-write `READBACK_SHA256`.
 ChatGPT's replies are expected to be substantive (see step 3). Docs: `docs/protocol.md`.
 
 0. `c2c tunnel status -w <workspace> --json`. If `needsChoice`, follow
@@ -689,6 +700,7 @@ ChatGPT's replies are expected to be substantive (see step 3). Docs: `docs/proto
 STATE: INIT
 TASK_ID: c2c_f81a
 ITERATION: 0
+DRIVE_CHECKPOINT: file:<drive-file-id> -> <requested-successor-state>
 
 GOAL:
 <user's goal, one paragraph>
@@ -696,6 +708,8 @@ GOAL:
 INSTRUCTION:
 Inspect the connected workspace through the Codex with ChatGPT MCP connector.
 Produce a C2C PLAN message.
+For a Drive-backed Episode task, include the Drive write and raw readback as
+required completion actions in the plan.
 ```
 
    Confirm the INIT message is visibly in that ChatGPT conversation (one cheap
@@ -707,6 +721,9 @@ Produce a C2C PLAN message.
 3. Wait for ChatGPT's `STATE: PLAN` reply (**In-app browser** §8 — short DOM
    checks, same tab; do not treat a 5-minute browser timeout as failure).
    Read GOAL/ACTIONS/TESTS/SUCCESS_CRITERIA.
+   For a Drive-backed Episode, reject a PLAN that omits the same
+   `DRIVE_CHECKPOINT`, an explicit Drive write, or the
+   `DRIVE_COMPLETION_GATE`. Ask once for the missing gate, then continue.
    A good PLAN also carries RATIONALE and concrete natural-language edit
    suggestions (which file, what to change, why). If the reply is a bare
    one-liner with no rationale or file-level guidance, ask once:
@@ -786,7 +803,12 @@ release approval. Treat an unrelated test_status record as historical.
    `execution_output`) and replies DONE / PLAN (next iteration) / BLOCKED.
 8. Loop. Respect maxIterations (`.c2c.json`, default 12). At the limit, pause and ask
    the user: "已完成 12 轮协作，仍有未解决问题，是否继续？"
-9. On DONE: summarize the result to the user in plain language.
+9. On DONE: for a Drive-backed Episode, require the same `DRIVE_CHECKPOINT`
+   and a valid `READBACK_SHA256`. Codex must independently raw-read that exact
+   Drive file and verify the successor state and bytes. Missing or mismatched
+   evidence is not DONE: send one PLAN request limited to the missing Drive
+   write/readback, then wait. Only after verification, summarize the result
+   to the user in plain language.
    `c2c session set -w <ws> --state DONE --clear-checkpoint`
 10. On BLOCKED: read ChatGPT's reason, fix what you can, or surface the single
     decision the user must make.
