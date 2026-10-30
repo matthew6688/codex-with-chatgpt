@@ -40,6 +40,10 @@ Local checkpoint values (session only):
 | `EXECUTED_SENT` | EXECUTED typed; waiting for review |
 | `DONE` / `BLOCKED` | Terminal; DONE should `--clear-checkpoint` |
 
+For a Drive-backed Episode, `DONE` is terminal only after Codex raw-reads the
+same Drive file and verifies the requested successor and SHA. A ChatGPT `DONE`
+without that proof remains incomplete and gets one Drive-only PLAN request.
+
 Legacy sessions without a checkpoint keep the old loop. The first normal
 iteration after this version writes a checkpoint automatically.
 

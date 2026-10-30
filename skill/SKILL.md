@@ -631,6 +631,11 @@ no 40-step epics. Use C2C control messages.
 Protocol states sent to ChatGPT: INIT → PLAN → EXECUTING → EXECUTED → REVIEW → (PLAN | DONE | BLOCKED).
 Local checkpoint states (session only, never a ChatGPT `STATE:` line):
 `INIT`, `PLAN_RECEIVED`, `EXECUTING`, `EXECUTED_LOCAL`, `EXECUTED_SENT`, `DONE`, `BLOCKED`.
+**Drive hard gate:** for any Drive-backed Episode task, this workflow cannot
+reach local `DONE` from a chat message alone. The same Drive file ID must be
+written, raw-read back, and carry the requested successor state plus the
+verified SHA. GPT's `DONE` without that evidence is rejected once with a
+Drive-only PLAN request.
 Do not invent `STATE: RESUME`. If the original chat is gone, send HANDOFF.
 All control messages start with `[C2C]`. Keep Codex→ChatGPT messages under 1 KB.
 For every Episode-scoped `[C2C]` message in either direction, include
