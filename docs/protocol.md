@@ -280,11 +280,16 @@ This Project is bound only to:
 For workspace, code, git, and released execution output, use ONLY this
 Codex with ChatGPT connector; never use another workspace's C2C connector.
 This does not restrict the separately connected Google Drive app for files
-in this Project. For a Drive handoff, use its Drive read/write actions and
-verify the actual saved file. Do not infer Drive is read-only from
-workspace_info or from the C2C tool list; report a blocker only if the Drive
-action itself is unavailable or fails. If workspace_info names a different
-workspace, stop. Do not plan. Do not use this Project's memory.
+in this Project. Every Episode task uses one fixed loop:
+`READ → WRITE → READBACK → CONTINUE`. Reread the stable Control, perform its
+requested action, write real progress to the same Drive working file it names,
+then raw-read the same file ID and verify the successor bytes. A chat
+acknowledgement, plan, attachment, screenshot, workspace connector result, or
+read-only listing is not completion. If the exact Drive write action is present
+but not yet called, call it; do not report upload unavailable. Do not infer
+Drive is read-only from workspace_info or from the C2C tool list. If
+workspace_info names a different workspace, stop. Do not plan. Do not use this
+Project's memory.
 
 Read code, git, diffs, and any released command output through that
 connector. Never ask anyone to paste file bodies, diffs, or logs. After
